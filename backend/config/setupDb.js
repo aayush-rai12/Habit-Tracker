@@ -44,7 +44,7 @@ db.serialize(() => {
     )
   `);
 
-  //Habit_Labels Table (Many-to-Many relation kyunki ek habit ke multiple labels ho sakte hain)
+  //Habit_Labels Table to associate habits with labels (many-to-many relationship)
   db.run(`
     CREATE TABLE IF NOT EXISTS habit_labels (
       habitId TEXT NOT NULL,
