@@ -1,15 +1,14 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import db from '../config/db.js';
+
 const router = express.Router();
 
-// SIGNUP ROUTE to create a new user and generate JWT token
+// SIGNUP
 router.post('/signup', async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
-  // 1. Manual Validation
   if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ 
       error: { code: 'VALIDATION_ERROR', message: 'All fields are required.' } 
@@ -22,7 +21,6 @@ router.post('/signup', async (req, res) => {
   }
 
   try {
-    // Check if email already exists
     db.get('SELECT * FROM users WHERE email = ?', [email], async (err, existingUser) => {
       if (err) return res.status(500).json({ error: { message: 'Database error.' } });
       if (existingUser) {
@@ -31,19 +29,20 @@ router.post('/signup', async (req, res) => {
         });
       }
 
-      // Hash Password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // Insert User
-      const userId = crypto.randomUUID();
-      const sql = `INSERT INTO users (id, firstName, lastName, email, password) VALUES (?, ?, ?, ?, ?)`;
+      const sql = `INSERT INTO users (firstName, lastName, email, password) VALUES (?, ?, ?, ?)`;
       
-      db.run(sql, [userId, firstName, lastName, email, hashedPassword], function(err) {
+      db.run(sql, [firstName, lastName, email, hashedPassword], function(err) {
         if (err) return res.status(500).json({ error: { message: 'Failed to create user.' } });
 
-        // 5. Generate JWT Token
-        const token = jwt.sign({ id: userId, email: email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const userId = this.lastID;
+        const token = jwt.sign(
+          { id: userId, email },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+        );
 
         res.status(201).json({
           message: 'User created successfully',
@@ -57,7 +56,7 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// LOGIN ROUTE to authenticate user and generate JWT token
+// LOGIN Routes to handle user login and generate JWT token for authentication.
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -67,7 +66,6 @@ router.post('/login', (req, res) => {
     });
   }
 
-  // Find User
   db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
     if (err) return res.status(500).json({ error: { message: 'Database error.' } });
     if (!user) {
@@ -76,7 +74,6 @@ router.post('/login', (req, res) => {
       });
     }
 
-    // Compare Password
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(401).json({ 
@@ -84,8 +81,11 @@ router.post('/login', (req, res) => {
       });
     }
 
-    // Generate Token
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+    );
 
     res.json({
       message: 'Logged in successfully',
@@ -95,8 +95,7 @@ router.post('/login', (req, res) => {
   });
 });
 
-// LOGOUT ROUTE
-
+// LOGOUT
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully. Please clear token on client side.' });
 });

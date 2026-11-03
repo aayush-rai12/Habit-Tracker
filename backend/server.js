@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
 // Database setup
@@ -12,6 +11,7 @@ import authRoutes from './routes/authRoutes.js';
 import habitRoutes from './routes/habitRoutes.js';
 import completionRoutes from './routes/completionRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import labelRoutes from './routes/labelRoutes.js';
 
 const app = express();
 
@@ -24,27 +24,24 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-
-// Auth routes
 app.use('/api/auth', authRoutes);
-// Habit routes
 app.use('/api/habits', habitRoutes);
-// Completion routes (nested under habits)
 app.use('/api/habits/:id/completions', completionRoutes);
-// Dashboard routes
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/labels', labelRoutes);
 
-// Here I'm checking server is running or not
+// Health check
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Backend is running!'
-  });
+  res.json({ status: 'ok', message: 'Backend is running!' });
 });
 
-// Server
-const PORT = process.env.PORT || 5000;
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: { message: 'Something went wrong!' } });
+});
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

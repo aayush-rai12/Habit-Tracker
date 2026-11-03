@@ -1,10 +1,10 @@
 import db from './db.js';
 
 db.serialize(() => {
-  // Users Table for storing user Details
+  // Users Table
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       firstName TEXT NOT NULL,
       lastName TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
@@ -13,11 +13,11 @@ db.serialize(() => {
     )
   `);
 
-  // Habits Table to store user habits
+  // Habits Table
   db.run(`
     CREATE TABLE IF NOT EXISTS habits (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
       name TEXT NOT NULL,
       description TEXT,
       startDate TEXT NOT NULL,
@@ -31,35 +31,35 @@ db.serialize(() => {
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
-
-  // Labels Table to categorize habits
+    // Labels Table
   db.run(`
     CREATE TABLE IF NOT EXISTS labels (
-      id TEXT PRIMARY KEY,
-      userId TEXT NOT NULL,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
       name TEXT NOT NULL,
       color TEXT DEFAULT '#3B82F6',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(userId, name),
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
-  //Habit_Labels Table to associate habits with labels (many-to-many relationship)
+  // Habit_Labels Table 
   db.run(`
     CREATE TABLE IF NOT EXISTS habit_labels (
-      habitId TEXT NOT NULL,
-      labelId TEXT NOT NULL,
+      habitId INTEGER NOT NULL,
+      labelId INTEGER NOT NULL,
       PRIMARY KEY (habitId, labelId),
       FOREIGN KEY (habitId) REFERENCES habits(id) ON DELETE CASCADE,
       FOREIGN KEY (labelId) REFERENCES labels(id) ON DELETE CASCADE
     )
   `);
 
-  //Completions Table to track when a habit is completed on a specific date
+  // Completions Table
   db.run(`
     CREATE TABLE IF NOT EXISTS completions (
-      id TEXT PRIMARY KEY,
-      habitId TEXT NOT NULL,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      habitId INTEGER NOT NULL,
       date TEXT NOT NULL,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (habitId) REFERENCES habits(id) ON DELETE CASCADE,
