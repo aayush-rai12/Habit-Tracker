@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   // baseURL: 'http://localhost:5000/api',
-  baseURL: 'https://habit-tracker-8h8o.onrender.com/api',
+  baseURL: process.env.BackendAPI,
 });
 
 api.interceptors.request.use((config) => {
