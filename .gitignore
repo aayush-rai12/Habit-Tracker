@@ -7,3 +7,6 @@ coverage/
 !.env.example
 .DS_Store
 *.log
+/LICENSE
+/backend/config/habit_tracker.db*
+/mock-data/
